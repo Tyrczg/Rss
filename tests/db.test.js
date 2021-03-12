@@ -1,24 +1,71 @@
-
+const config = require('config')
+const Database = require('../src/storage/db')
 
 describe('test db interface', () => {
-    test('It should insert value', () => {
-        const val = {a: 2}
-        expect(val).toEqual({a: 2})
-    })
-    
-    test('It should find value', () => {
-        const val = {a: 2}
-        expect(val).toEqual({a: 2})
+    const db = new Database()
+
+    beforeAll(async () => {
+        try {
+            const dbConf = config.get('db')
+            await db.connect(dbConf)
+        } catch (e) {
+            throw(e)
+        }
     })
 
-    test('It should update value', () => {
-        const val = {a: 2}
-        expect(val).toEqual({a: 2})
+    beforeEach(async () => {
+        try {
+            await db.insert('rss', { 'email': 'test@test.pl', 'rss': 'rss.xml' })
+        } catch(e) {
+            throw(e)
+        }
+    });
+
+    afterAll(() => {    
+        db.disconnect()
     })
 
-    test('It should remove value', () => {
-        const val = {a: 2}
-        expect(val).toEqual({a: 2})
+    afterEach(async () => {
+        try {
+            await db.drop('rss')
+        } catch (e) {
+            throw(e)
+        }
+    });
+
+    test('It should insert data', async () => {
+        try {
+            const res = await db.insert('rss', { 'email': 'test2@test.pl', 'rss': 'rss.xml' })
+            expect(res.result.ok).toBe(1)
+        } catch (e) {
+            throw (e)
+        }
     })
 
+    test('It should find data', async () => {
+        try {
+            const data = await db.find('rss', { email: { $eq: 'test@test.pl' } })
+            expect(data).toMatchObject({ email: 'test@test.pl', rss: 'rss.xml' });
+        } catch (e) {
+            throw(e)
+        }
+    })
+
+    test('It should update value', async () => {
+        try {
+            const res = await db.update('rss', { "email" : "test@test.pl" }, { $set: {'email': 'test2@test.pl', 'rss': '2rss.xml'}})
+            expect(res.result.ok).toBe(1)
+        } catch (e) {
+            throw(e)
+        }
+    })
+
+    test('It should remove value', async () => {
+        try {
+            const res = await db.remove('rss', { 'email': 'test@test.pl' })
+            expect(res.result.ok).toBe(1)
+        } catch (e) {
+            throw(e)
+        }
+    })
 })
